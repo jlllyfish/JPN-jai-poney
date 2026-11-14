@@ -94,8 +94,11 @@
   .head .logo { height: 7.5rem; width: auto; flex: none; align-self: center; }
   .head .fr-callout { flex: 1; margin: 0; }
   .fr-callout { padding: .5rem 1rem; margin: 0 0 .5rem; }
-  .fr-callout .fr-callout__title { font-size: 1.125rem; line-height: 1.5rem; margin: 0 0 .125rem; }
-  .fr-callout .fr-callout__text { margin: 0; }
+  .fr-callout .fr-callout__title { font-size: 1.5rem; line-height: 2rem; font-weight: 700; margin: 0 0 .25rem; }
+  .fr-callout .fr-callout__text { margin: 0; font-size: .875rem; line-height: 1.5rem; }
+  .fr-callout .fr-callout__title + .fr-callout__text { color: var(--text-mention-grey); }
+  .fr-callout .fr-callout__text:not(.fr-text--sm) { margin-bottom: .75rem; }
+  .fr-callout .fr-callout__text.fr-text--sm { font-size: .8125rem; line-height: 1.25rem; margin-bottom: .125rem; }
   .layout { margin-top: .25rem; gap: 1rem; }
   @media (min-width: 62em) { .layout.has-donut { grid-template-columns: minmax(0, 1fr) 16rem; } }
   .bar { margin-bottom: .25rem; }
@@ -758,11 +761,10 @@ function renderDrawer() {
       <div class="add-slot">
         <div class="fr-input-group"><label class="fr-label" for="ns-date">Date</label><input class="fr-input" type="date" id="ns-date"></div>
         <div class="fr-input-group"><label class="fr-label" for="ns-time">Heure</label><input class="fr-input" type="time" id="ns-time"></div>
-        <div class="fr-input-group full"><label class="fr-label" for="ns-text">Libellé libre<span class="fr-hint-text">Utilisé si aucune date n'est choisie (ex. « Visio, semaine 48 »)</span></label><input class="fr-input" type="text" id="ns-text"></div>
         <div class="full"><button class="fr-btn fr-btn--icon-left fr-icon-add-line" data-addslot>Ajouter ce créneau</button></div>
       </div>
       <div class="fr-alert fr-alert--error fr-alert--sm fr-mt-2w" id="slot-err" style="display:none"><p></p></div>
-      <p class="fr-hint-text fr-mt-1w">Les libellés au format « Lundi 26/11 14h » sont affichés sous forme de dates dans la grille.</p></section>
+      <p class="fr-hint-text fr-mt-1w">Les créneaux sont affichés sous forme de dates dans la grille.</p></section>
 
     <section id="cfg-acces"><h2 class="fr-h5">Accès</h2>
       <ul class="fr-toggle__list">
@@ -810,9 +812,9 @@ $('#drawer').addEventListener('click', async e => {
     return;
   }
   if (e.target.closest('[data-addslot]')) {
-    const d = $('#ns-date').value, t = $('#ns-time').value, txt = $('#ns-text').value.trim();
-    const label = d ? makeLabel(d, t) : txt;
-    if (!label) { showSlotErr('Choisissez une date ou saisissez un libellé.'); return; }
+    const d = $('#ns-date').value, t = $('#ns-time').value;
+    if (!d) { showSlotErr('Choisissez une date.'); return; }
+    const label = makeLabel(d, t);
     const err = await slotAction([['AddRecord', opts.tableCreneaux, null, { [colUsed]: label }]]);
     if (err) showSlotErr('Ajout impossible : ' + err);
   }
