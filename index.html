@@ -152,6 +152,7 @@
   /* Vue cartes (mobile) */
   .vcard { border: 1px solid var(--border-default-grey); background: var(--background-default-grey); padding: .75rem; margin-bottom: .5rem; }
   .vcard.best { border-left: 4px solid var(--background-action-high-success); background: var(--background-contrast-info); }
+  .vc-me { display: flex; flex-wrap: wrap; align-items: center; gap: .375rem; margin: 0 0 .5rem; font-size: .875rem; }
   .vc-head { display: flex; flex-wrap: wrap; align-items: center; gap: .25rem .75rem; margin-bottom: .5rem; }
   .vc-title { font-size: 1rem; line-height: 1.5rem; font-weight: 700; margin: 0; flex: 1 1 auto; }
   .vc-count { margin: 0; font-size: .875rem; }
@@ -396,7 +397,8 @@ const iconSpan = (rep, extra = '') => rep ? `<span class="ico ${REP_META[rep].ic
 const openCards = new Set();
 function cardsHtml(rowsArr, arr, totals, best, voting) {
   const reps = opts.allowMaybe ? [REP.YES, REP.MAYBE, REP.NO] : [REP.YES, REP.NO];
-  let c = '<div class="cards-view">';
+  const meN = voting ? meInfo() : null;
+  let c = '<div class="cards-view">' + (meN ? `<p class="vc-me"><span class="fr-icon-user-line fr-icon--sm" aria-hidden="true"></span> Vous votez en tant que <b>${esc(meN.name)}</b> <span class="fr-badge fr-badge--sm fr-badge--info fr-badge--no-icon">Vous</span></p>` : '');
   slots.forEach((s, i) => {
     const p = s.p, t = totals[i];
     const title = p ? `${p.dow} ${p.day} ${p.mon}${p.time ? ' · ' + p.time : ''}` : s.label;
