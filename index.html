@@ -82,7 +82,8 @@
   .cfg-grid { display: grid; grid-template-columns: 14rem minmax(0, 46rem); gap: 2rem; align-items: start; }
   .cfg-nav { position: sticky; top: 1rem; }
   .cfg section { scroll-margin-top: .5rem; }
-  @media (max-width: 61.99em) { .cfg-grid { grid-template-columns: minmax(0, 1fr); } .cfg-nav { position: static; } }
+  @media (max-width: 61.99em) { .cfg-grid { grid-template-columns: minmax(0, 1fr); } .cfg-nav { position: static; } .cfg-nav [data-close] { display: none; } }
+  .cfg { overflow-x: hidden; }
   .cfg section { padding: 1.5rem 0; border-bottom: 1px solid var(--border-default-grey); }
   .cfg section:last-child { border-bottom: none; }
   .slot-row { display: flex; gap: .5rem; margin-bottom: .5rem; align-items: center; }
@@ -122,6 +123,30 @@
   .legend li { padding: .25rem 0; gap: .5rem; font-size: .875rem; }
   .legend .pct { width: 2.5rem; }
   @media (max-width: 61.99em) { .donut-card { flex-direction: row; flex-wrap: wrap; align-items: center; } }
+
+  /* Responsive */
+  .layout, .main, .donut-side { min-width: 0; }
+  .fr-table, .fr-table__wrapper, .fr-table__container { max-width: 100%; min-width: 0; }
+  .fr-table { overflow-x: clip; }
+  .fr-table__wrapper, .fr-table__container { display: block; }
+  .fr-table__content { display: block; overflow-x: auto; }
+  .fr-table thead th.slot .fr-badge { font-size: .625rem; white-space: normal; text-align: center; line-height: 1rem; }
+  @media (max-width: 47.99em) {
+    body { padding: .5rem; }
+    .head { flex-direction: column; gap: .5rem; }
+    .head .logo { height: 4rem; align-self: flex-start; }
+    .fr-callout .fr-callout__title { font-size: 1.25rem; line-height: 1.75rem; }
+    .fr-table thead th.slot { width: 6rem; min-width: 6rem; max-width: 6rem; }
+    .fr-table th.who .nm { max-width: 6.5rem; }
+    .vote-bar { flex-direction: column; align-items: stretch; }
+    .vote-bar > p { flex-basis: auto; }
+    .vote-bar .fr-btns-group { flex-direction: column; flex-wrap: wrap; }
+    .vote-bar .fr-btns-group li, .vote-bar .fr-btns-group .fr-btn { width: 100%; justify-content: center; }
+    .donut-card { flex-direction: column; align-items: stretch; }
+    .cfg { padding: .75rem .5rem 3rem; }
+    .slot-row { flex-wrap: wrap; }
+    .add-slot { grid-template-columns: 1fr; }
+  }
   .add-slot { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem; }
   .add-slot .full { grid-column: 1 / -1; }
   .cfg .fr-toggle__list { margin: 0; padding: 0; list-style: none; }
