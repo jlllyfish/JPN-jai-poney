@@ -125,6 +125,7 @@
   @media (max-width: 61.99em) { .donut-card { flex-direction: row; flex-wrap: wrap; align-items: center; } }
 
   /* Responsive */
+  .cards-view { display: none; }
   .layout, .main, .donut-side { min-width: 0; }
   .fr-table, .fr-table__wrapper, .fr-table__container { max-width: 100%; min-width: 0; }
   .fr-table { overflow-x: clip; }
@@ -132,6 +133,8 @@
   .fr-table__content { display: block; overflow-x: auto; }
   .fr-table thead th.slot .fr-badge { font-size: .625rem; white-space: normal; text-align: center; line-height: 1rem; }
   @media (max-width: 47.99em) {
+    .tbl-view { display: none; }
+    .cards-view { display: block; }
     body { padding: .5rem; }
     .head { flex-direction: column; gap: .5rem; }
     .head .logo { height: 4rem; align-self: flex-start; }
@@ -145,7 +148,25 @@
     .donut-card { flex-direction: column; align-items: stretch; }
     .cfg { padding: .75rem .5rem 3rem; }
     .slot-row { flex-wrap: wrap; }
-    .add-slot { grid-template-columns: 1fr; }
+  
+  /* Vue cartes (mobile) */
+  .vcard { border: 1px solid var(--border-default-grey); background: var(--background-default-grey); padding: .75rem; margin-bottom: .5rem; }
+  .vcard.best { border-left: 4px solid var(--background-action-high-success); background: var(--background-contrast-info); }
+  .vc-head { display: flex; flex-wrap: wrap; align-items: center; gap: .25rem .75rem; margin-bottom: .5rem; }
+  .vc-title { font-size: 1rem; line-height: 1.5rem; font-weight: 700; margin: 0; flex: 1 1 auto; }
+  .vc-count { margin: 0; font-size: .875rem; }
+  .vc-btns { display: flex; gap: .5rem; }
+  .vc-btns .fr-btn { flex: 1 1 0; min-width: 0; justify-content: center; padding-left: .5rem; padding-right: .5rem; }
+  .vc-btns .fr-btn[data-r="Oui"]::before { color: var(--text-default-success); }
+  .vc-btns .fr-btn[data-r="Peut-être"]::before { color: var(--text-mention-grey); }
+  .vc-btns .fr-btn[data-r="Non"]::before { color: var(--text-default-error); }
+  .vc-btns .fr-btn.sel { background-color: var(--background-contrast-info); box-shadow: inset 0 0 0 2px var(--background-action-high-blue-france); }
+  .vcard details { margin-top: .5rem; }
+  .vcard summary { cursor: pointer; font-size: .875rem; color: var(--text-action-high-blue-france); padding: .25rem 0; }
+  .vc-list { list-style: none; margin: .25rem 0 0; padding: 0; }
+  .vc-list li { display: flex; align-items: center; justify-content: space-between; gap: .5rem; padding: .25rem 0; border-top: 1px solid var(--border-default-grey); font-size: .875rem; }
+  .vc-list .nm { font-weight: 700; overflow: hidden; text-overflow: ellipsis; }
+  .add-slot { grid-template-columns: 1fr; }
   }
   .add-slot { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem; }
   .add-slot .full { grid-column: 1 / -1; }
@@ -370,6 +391,48 @@ async function resolveIdentity() {
 /* ---------- Rendu ---------- */
 const iconSpan = (rep, extra = '') => rep ? `<span class="ico ${REP_META[rep].icon} ${REP_META[rep].cls}" aria-hidden="true"></span>` : `<span class="ico fr-icon-subtract-line st-none ${extra}" aria-hidden="true"></span>`;
 
+
+/* ---------- Vue mobile : une carte par date ---------- */
+const openCards = new Set();
+function cardsHtml(rowsArr, arr, totals, best, voting) {
+  const reps = opts.allowMaybe ? [REP.YES, REP.MAYBE, REP.NO] : [REP.YES, REP.NO];
+  let c = '<div class="cards-view">';
+  slots.forEach((s, i) => {
+    const p = s.p, t = totals[i];
+    const title = p ? `${p.dow} ${p.day} ${p.mon}${p.time ? ' · ' + p.time : ''}` : s.label;
+    const others = rowsArr.filter(x => !(voting && (x.virtual || isMe(x))));
+    c += `<article class="vcard ${best[i] ? 'best' : ''}"><header class="vc-head"><h3 class="vc-title">${esc(title)}</h3>
+      ${best[i] ? '<p class="fr-badge fr-badge--sm fr-badge--success fr-badge--no-icon">Meilleur choix</p>' : ''}
+      <p class="vc-count"><b>${t.oui}</b> oui${opts.allowMaybe && t.pe ? ` <span class="st-maybe">(+${t.pe})</span>` : ''}</p></header>`;
+    if (voting) {
+      c += `<div class="vc-btns" role="group" aria-label="Votre réponse pour ${esc(title)}">` + reps.map(r => {
+        const sel = (draft[s.id] || '') === r;
+        return `<button class="fr-btn fr-btn--sm fr-btn--tertiary fr-btn--icon-left ${REP_META[r].seg || REP_META[r].icon} ${sel ? 'sel' : ''}" data-r="${r}" data-dvset="${s.id}|${r}" aria-pressed="${sel}">${REP_META[r].label}</button>`;
+      }).join('') + '</div>';
+    }
+    if (others.length) {
+      c += `<details data-slot="${s.id}" ${openCards.has(String(s.id)) ? 'open' : ''}><summary>Voir les réponses (${others.length})</summary><ul class="vc-list">`;
+      others.forEach(pp => {
+        const pi = arr.indexOf(pp);
+        const rep = pp.votes.get(s.id)?.rep || '';
+        const txt = rep ? REP_META[rep].label : 'Sans réponse';
+        const edit = canEdit(pp);
+        const cell = edit
+          ? `<button class="fr-btn fr-btn--tertiary-no-outline ${rep ? REP_META[rep].icon : 'fr-icon-subtract-line'} ${rep ? REP_META[rep].cls : 'st-none'}" data-pi="${pi}" data-s="${s.id}" title="${esc(txt)}">${esc(txt)}</button>`
+          : `<span title="${esc(txt)}">${iconSpan(rep)}<span class="fr-sr-only">${esc(txt)}</span></span>`;
+        c += `<li><span class="nm">${esc(pp.name)}</span>${cell}</li>`;
+      });
+      c += '</ul></details>';
+    }
+    c += '</article>';
+  });
+  return c + '</div>';
+}
+document.addEventListener('toggle', e => {
+  const d = e.target; if (!(d instanceof HTMLDetailsElement) || !d.dataset.slot) return;
+  if (d.open) openCards.add(d.dataset.slot); else openCards.delete(d.dataset.slot);
+}, true);
+
 function render() {
   const app = $('#app');
   if (records === null) {
@@ -422,7 +485,7 @@ function render() {
     app.innerHTML = h; return;
   }
 
-  h += '<div class="fr-table fr-table--no-caption"><div class="fr-table__wrapper"><div class="fr-table__container"><div class="fr-table__content"><table><caption>Disponibilités des participants</caption><thead><tr><th scope="col" class="who"><span class="fr-sr-only">Participant</span></th>';
+  h += '<div class="fr-table fr-table--no-caption tbl-view"><div class="fr-table__wrapper"><div class="fr-table__container"><div class="fr-table__content"><table><caption>Disponibilités des participants</caption><thead><tr><th scope="col" class="who"><span class="fr-sr-only">Participant</span></th>';
   slots.forEach((s, i) => {
     const p = s.p, t = totals[i];
     const head = p
@@ -459,6 +522,7 @@ function render() {
   h += `</tbody><tfoot><tr><th scope="row" class="who">Réponses « oui »</th>`;
   totals.forEach((t, i) => { h += `<td class="${best[i] ? 'best' : ''}"><b>${t.oui}</b>${opts.allowMaybe && t.pe ? ` <span class="st-maybe">(+${t.pe})</span>` : ''}</td>`; });
   h += '</tr></tfoot></table></div></div></div></div>';
+  h += cardsHtml(rowsArr, arr, totals, best, voting);
 
   if (voting) {
     const mineNow = arr.find(isMe);
@@ -714,6 +778,8 @@ function openMenu(btn, pi) {
 document.addEventListener('click', e => { if (!e.target.closest('.menu') && !e.target.closest('[data-menu]')) closeMenu(); });
 
 $('#app').addEventListener('click', e => {
+  const dvs = e.target.closest('[data-dvset]');
+  if (dvs) { const [id, r] = dvs.dataset.dvset.split('|'); draft[id] = (draft[id] || '') === r ? '' : r; dirty = true; render(); return; }
   const dv = e.target.closest('[data-dv]');
   if (dv) { const id = dv.dataset.dv; draft[id] = nextRep(draft[id] || ''); dirty = true; render(); const el = document.querySelector('[data-dv="' + id + '"]'); if (el) el.focus(); return; }
   const sd = e.target.closest('[data-side]');
